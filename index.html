@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Wisdom </title>
+    <title>Daily Wisdom</title>
     <!-- Load Tailwind CSS --><script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- PWA MANIFEST LINK (For Install Button) --><link rel="manifest" href="manifest.json">
+    <!-- PWA Metadata tags for iOS/Safari -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#ff7f00">
     
     <style>
         /* Custom Font and Body Styling */
@@ -45,13 +47,13 @@
         <!-- HEADER SECTION -->
         <div class="text-center mb-6 pt-4">
             <!-- Image Placeholder for Logo: 150x20 -->
-            <img src="logo/kriya_logo.jpeg" 
+            <img src="https://brsujit.github.io/messages/logo/kriya_logo.jpeg" 
                  alt="Kriya Yoga Logo Placeholder" 
                  class="mx-auto mb-2 block" 
                  style="height: 80px; width: 250px;">
             
             <!-- Main Title (Deep Orange) -->
-            <h1 class="text-3xl font-extrabold text-[#ff7f00] tracking-wider mb-4">Messages from Masters</h1>
+            <h1 class="text-4xl font-extrabold text-[#ff7f00] tracking-wider mb-4">Messages from Masters</h1>
             
             <!-- THIN, WIDE, FAINT ORANGE LINE BELOW HEADER -->
             <div class="border-t border-amber-300 w-11/12 mx-auto"></div> 
@@ -99,37 +101,80 @@
     </div>
 
     <script>
-        // --- LOCAL CONTENT SOURCE (Previously in articles.json) ---
-        const localArticles = [
-            {
-                title: "Messages from Kriya Yoga Masters",
-                body: "Breath control is self-control. Breath mastery is self-mastery. Breathlessness stage is deathlessness stage.",
-                author: "— Paramahamasa Hariharananda"
-            },
-            {
-                title: "The Discipline of Daily Practice",
-                body: "The greatest achievements are often the result of small, consistent efforts made daily. Do not seek drastic changes overnight; instead, focus on incremental improvements.\n\nA single drop of water is insignificant, but the relentless consistency of rain carves canyons. Today, identify one small, positive habit and commit to repeating it without fail. That small step is the message from your future self.",
-                author: "— The Masters"
-            },
-            {
-                title: "Stillness: The Path to Inner Clarity",
-                body: "In a world demanding constant motion, stillness is a revolutionary act. Take a moment today to consciously unhook from the relentless rush of activity.\n\nFind five minutes of silence, not to plan or worry, but simply to observe your breath and the world around you. This deliberate pause recharges your inner resources and allows intuition to surface, guiding you with clarity you cannot find in haste.",
-                author: "— Kriya Master"
-            },
-            {
-                title: "The Secret of Creative Focus",
-                body: "Creativity is not reserved for artists; it is the fundamental human ability to solve problems and see possibilities where none existed before. Today, apply a creative lens to the most mundane task on your list. How can you approach it differently?\n\nThe Master knows that innovation is born from curiosity, not obligation. Unleash your unique perspective and watch the ordinary transform.",
-                author: "— The Inner Voice"
-            }
-        ];
-        
+        // --- RAW MESSAGE DATA (Simulating a single text file input) ---
+        //
+        // FORMAT:
+        // 1. Title must be on the first line.
+        // 2. Author must be on the last line, prefixed with "— " (em dash and space).
+        // 3. Messages must be separated by the unique delimiter: ---MESSAGE END---
+        // 4. Use double newlines (\n\n) for paragraphs in the body.
+        //
+        const rawMessageData = `
+Messages from Kriya Yoga Masters
+Breath control is self-control. Breath mastery is self-mastery. Breathlessness stage is deathlessness stage.
+— Paramahamasa Hariharananda
+---MESSAGE END---
+The Discipline of Daily Practice
+The greatest achievements are often the result of small, consistent efforts made daily. Do not seek drastic changes overnight; instead, focus on incremental improvements.
+
+A single drop of water is insignificant, but the relentless consistency of rain carves canyons. Today, identify one small, positive habit and commit to repeating it without fail.
+— The Masters
+---MESSAGE END---
+Stillness: The Path to Inner Clarity
+In a world demanding constant motion, stillness is a revolutionary act. Take a moment today to consciously unhook from the relentless rush of activity.
+
+Find five minutes of silence, not to plan or worry, but simply to observe your breath and the world around you. This deliberate pause recharges your inner resources and allows intuition to surface, guiding you with clarity you cannot find in haste.
+— Kriya Master
+---MESSAGE END---
+The Secret of Creative Focus
+Creativity is not reserved for artists; it is the fundamental human ability to solve problems and see possibilities where none existed before. Today, apply a creative lens to the most mundane task on your list. How can you approach it differently?
+
+The Master knows that innovation is born from curiosity, not obligation. Unleash your unique perspective and watch the ordinary transform.
+— The Inner Voice
+---MESSAGE END---
+`;
+
         // --- Global State and DOM Elements ---
+        let localArticles = [];
         let currentArticleIndex = 0;
         const articleTitleDiv = document.getElementById('article-title');
         const articleBodyDiv = document.getElementById('article-body');
         const articleAuthorDiv = document.getElementById('article-author'); 
         const errorMessageDiv = document.getElementById('error-message');
         const installButton = document.getElementById('install-button');
+
+        // --- Data Parsing Function (Replaces JSON parsing) ---
+        function parseRawData(rawData) {
+            const articles = [];
+            
+            // 1. Split the raw data by the unique delimiter, cleaning up extra whitespace/newlines
+            const rawMessages = rawData.split('---MESSAGE END---')
+                                       .map(msg => msg.trim())
+                                       .filter(msg => msg.length > 0);
+
+            rawMessages.forEach(rawMsg => {
+                const lines = rawMsg.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+                
+                if (lines.length >= 2) {
+                    const title = lines[0];
+                    let author = '';
+                    let bodyLines = lines.slice(1);
+                    
+                    // Check if the last line is the author (starts with '— ')
+                    if (lines[lines.length - 1].startsWith('— ')) {
+                        author = lines[lines.length - 1];
+                        bodyLines = lines.slice(1, -1);
+                    }
+
+                    // Rejoin body lines, preserving double newlines for paragraphs
+                    const body = bodyLines.join('\n'); // Single newline separates lines within a paragraph
+                    
+                    articles.push({ title, body, author });
+                }
+            });
+            
+            return articles;
+        }
 
         // --- Utility function for deterministic selection (same article all day) ---
         function simpleHash(str) {
@@ -177,12 +222,14 @@
             errorMessageDiv.classList.add('hidden');
         }
 
-        // --- PWA Installation Logic (Hidden by default, shown by 'beforeinstallprompt') ---
+        // --- PWA INSTALLATION LOGIC ---
+        
         let deferredPrompt; 
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            installButton.classList.remove('hidden');
+            // Only show button if prompt is available
+            installButton.classList.remove('hidden'); 
 
             installButton.addEventListener('click', () => {
                 installButton.classList.add('hidden');
@@ -201,7 +248,9 @@
 
         // --- Initialization ---
         document.addEventListener('DOMContentLoaded', () => {
-            // Load articles directly from the embedded array
+            // Load and display the content
+            localArticles = parseRawData(rawMessageData);
+
             if (localArticles.length > 0) {
                 initializeIndex();
                 displayArticle(currentArticleIndex);
