@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Wisdom </title>
+    <!-- Load Tailwind CSS --><script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- PWA MANIFEST LINK (For Install Button) --><link rel="manifest" href="manifest.json">
+    
+    <style>
+        /* Custom Font and Body Styling */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Light cream background to match image */
+            background-color: #fcfaf8; 
+            display: flex;
+            justify-content: center;
+            /* Center the card vertically and horizontally */
+            align-items: center; 
+            min-height: 100vh;
+            padding: 20px;
+            /* Reset positioning from curved design */
+            position: static; 
+            overflow-x: hidden; 
+        }
+        /* Custom style for the article box */
+        .article-box {
+            line-height: 1.75; 
+            border-radius: 8px; /* Added slight rounding for card feel */
+        }
+        /* Restore shadows and rounded corners for the main card */
+        #app {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            background-color: white; /* Explicitly white card */
+        }
+    </style>
+</head>
+<body>
+    <!-- Main Content Container (Restored to centered card layout) -->
+    <div id="app" class="w-full max-w-xl mx-auto p-6 md:p-10">
+        
+        <!-- HEADER SECTION -->
+        <div class="text-center mb-6 pt-4">
+            <!-- Image Placeholder for Logo: 150x20 -->
+            <img src="logo/kriya_logo.jpeg" 
+                 alt="Kriya Yoga Logo Placeholder" 
+                 class="mx-auto mb-2 block" 
+                 style="height: 80px; width: 250px;">
+            
+            <!-- Main Title (Deep Orange) -->
+            <h1 class="text-3xl font-extrabold text-[#ff7f00] tracking-wider mb-4">Messages from Masters</h1>
+            
+            <!-- THIN, WIDE, FAINT ORANGE LINE BELOW HEADER -->
+            <div class="border-t border-amber-300 w-11/12 mx-auto"></div> 
+        </div>
+
+        <!-- Article/Quote Display Area -->
+        <main id="article-container" class="min-h-[250px] flex flex-col items-center justify-center p-4 mt-4">
+            
+            <!-- Article Box Styled to match image (No left border) -->
+            <div id="article-card" class="article-box bg-white p-6 md:p-8 w-full shadow-lg">
+                
+                <!-- Dynamic Article Title (Faint Orange) -->
+                <h2 id="article-title" class="text-2xl font-bold text-amber-600 mb-4"></h2>
+                
+                <!-- Dynamic Article Content (Multi-paragraph) -->
+                <div id="article-body" class="text-gray-700 text-base leading-relaxed space-y-4" style="line-height: 1.75;">
+                    <p class="text-center text-gray-500">Loading daily message...</p>
+                </div>
+
+                <!-- MESSENGER NAME -->
+                <p id="article-author" class="text-right text-base font-semibold text-amber-700 mt-4 italic"></p>
+            </div>
+
+            <!-- Error State -->
+            <div id="error-message" class="hidden p-4 mt-6 bg-red-100 border-l-4 border-red-500 text-red-700 rounded-lg w-full">
+                <p>Error: Could not load messages data. The array is empty.</p>
+            </div>
+        </main>
+        
+        <!-- FOOTER BLOCK: Contains buttons and text -->
+        <div class="mt-8 pt-4">
+            
+            <!-- THIN, WIDE, FAINT ORANGE LINE ABOVE BUTTONS -->
+            <div class="border-t border-amber-300 w-11/12 mx-auto mb-6"></div> 
+            
+            <!-- Buttons (Thinned-out style applied) -->
+            <div class="flex justify-center space-x-4 mb-0">
+                <!-- Removed 'Next message' button -->
+                <button id="install-button" class="hidden bg-[#ff7f00] hover:bg-amber-700 text-white font-semibold py-1 px-3 rounded-full shadow-lg transition duration-150 ease-in-out">
+                    Install in your mobile
+                </button>
+            </div>
+        </div>
+        
+    </div>
+
+    <script>
+        // --- LOCAL CONTENT SOURCE (Previously in articles.json) ---
+        const localArticles = [
+            {
+                title: "Messages from Kriya Yoga Masters",
+                body: "Breath control is self-control. Breath mastery is self-mastery. Breathlessness stage is deathlessness stage.",
+                author: "— Paramahamasa Hariharananda"
+            },
+            {
+                title: "The Discipline of Daily Practice",
+                body: "The greatest achievements are often the result of small, consistent efforts made daily. Do not seek drastic changes overnight; instead, focus on incremental improvements.\n\nA single drop of water is insignificant, but the relentless consistency of rain carves canyons. Today, identify one small, positive habit and commit to repeating it without fail. That small step is the message from your future self.",
+                author: "— The Masters"
+            },
+            {
+                title: "Stillness: The Path to Inner Clarity",
+                body: "In a world demanding constant motion, stillness is a revolutionary act. Take a moment today to consciously unhook from the relentless rush of activity.\n\nFind five minutes of silence, not to plan or worry, but simply to observe your breath and the world around you. This deliberate pause recharges your inner resources and allows intuition to surface, guiding you with clarity you cannot find in haste.",
+                author: "— Kriya Master"
+            },
+            {
+                title: "The Secret of Creative Focus",
+                body: "Creativity is not reserved for artists; it is the fundamental human ability to solve problems and see possibilities where none existed before. Today, apply a creative lens to the most mundane task on your list. How can you approach it differently?\n\nThe Master knows that innovation is born from curiosity, not obligation. Unleash your unique perspective and watch the ordinary transform.",
+                author: "— The Inner Voice"
+            }
+        ];
+        
+        // --- Global State and DOM Elements ---
+        let currentArticleIndex = 0;
+        const articleTitleDiv = document.getElementById('article-title');
+        const articleBodyDiv = document.getElementById('article-body');
+        const articleAuthorDiv = document.getElementById('article-author'); 
+        const errorMessageDiv = document.getElementById('error-message');
+        const installButton = document.getElementById('install-button');
+
+        // --- Utility function for deterministic selection (same article all day) ---
+        function simpleHash(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash |= 0; 
+            }
+            return Math.abs(hash); 
+        }
+
+        // --- Core Functions ---
+
+        function initializeIndex() {
+            const date = new Date();
+            // YYYYMMDD string for deterministic hashing
+            const dateStringHash = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
+            const hash = simpleHash(dateStringHash);
+            
+            if (localArticles.length === 0) return -1;
+
+            // Selects a unique article based on the date
+            currentArticleIndex = hash % localArticles.length;
+            return currentArticleIndex;
+        }
+        
+        function displayArticle(index) {
+            if (index < 0 || index >= localArticles.length) {
+                articleBodyDiv.innerHTML = '';
+                errorMessageDiv.classList.remove('hidden');
+                return;
+            }
+            
+            const article = localArticles[index];
+            
+            articleTitleDiv.textContent = article.title;
+            
+            // Render the body, splitting by double newline to form paragraphs
+            articleBodyDiv.innerHTML = article.body.split('\n\n').map(p => `<p class="mb-4">${p}</p>`).join('');
+
+            articleAuthorDiv.textContent = article.author || '';
+
+            articleBodyDiv.classList.remove('hidden');
+            errorMessageDiv.classList.add('hidden');
+        }
+
+        // --- PWA Installation Logic (Hidden by default, shown by 'beforeinstallprompt') ---
+        let deferredPrompt; 
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installButton.classList.remove('hidden');
+
+            installButton.addEventListener('click', () => {
+                installButton.classList.add('hidden');
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    console.log(`Install prompt outcome: ${choiceResult.outcome}`);
+                    deferredPrompt = null;
+                });
+            });
+        });
+        
+        window.addEventListener('appinstalled', () => {
+            installButton.classList.add('hidden');
+        });
+
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load articles directly from the embedded array
+            if (localArticles.length > 0) {
+                initializeIndex();
+                displayArticle(currentArticleIndex);
+            } else {
+                errorMessageDiv.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
