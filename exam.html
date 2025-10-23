@@ -1,1 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Online MCQ Exam</title>
+  <style>
+    body { font-family: Arial; background: #f4f6fa; margin: 0; padding: 20px; }
+    .container { max-width: 600px; background: #fff; padding: 20px; margin: auto; border-radius: 10px; box-shadow: 0 0 10px #ccc; }
+    h2 { text-align: center; color: #333; }
+    .question { font-weight: bold; margin-top: 20px; }
+    .options { margin: 10px 0; }
+    .options label { display: block; margin: 5px 0; }
+    button { background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+    button:hover { background: #45a049; }
+    .result { text-align: center; font-size: 18px; color: #333; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>MCQ Examination</h2>
+    <div id="quiz"></div>
+    <button id="nextBtn">Next</button>
+    <div class="result" id="result"></div>
+  </div>
 
+  <script>
+    const quizData = [
+      {
+        question: "Who wrote the Bhagavad Gita?",
+        options: ["Vyasa", "Valmiki", "Kalidasa", "Tulsidas"],
+        answer: "Vyasa"
+      },
+      {
+        question: "How many chapters are there in the Bhagavad Gita?",
+        options: ["12", "16", "18", "20"],
+        answer: "18"
+      },
+      {
+        question: "Where was the Gita spoken?",
+        options: ["Kurukshetra", "Ayodhya", "Dwaraka", "Mathura"],
+        answer: "Kurukshetra"
+      }
+    ];
+
+    let current = 0;
+    let score = 0;
+
+    const quiz = document.getElementById('quiz');
+    const nextBtn = document.getElementById('nextBtn');
+    const result = document.getElementById('result');
+
+    function showQuestion() {
+      if (current < quizData.length) {
+        const q = quizData[current];
+        quiz.innerHTML = `
+          <div class="question">${current + 1}. ${q.question}</div>
+          <div class="options">
+            ${q.options.map(opt => `
+              <label>
+                <input type="radio" name="option" value="${opt}"> ${opt}
+              </label>`).join('')}
+          </div>`;
+      } else {
+        quiz.innerHTML = "";
+        nextBtn.style.display = "none";
+        result.innerHTML = `✅ You scored ${score} out of ${quizData.length}`;
+      }
+    }
+
+    nextBtn.addEventListener('click', () => {
+      const selected = document.querySelector('input[name="option"]:checked');
+      if (!selected) { alert("Please select an answer!"); return; }
+      if (selected.value === quizData[current].answer) score++;
+      current++;
+      showQuestion();
+    });
+
+    showQuestion();
+  </script>
+</body>
+</html>
